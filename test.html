@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Sand Particles with Gaps</title>
+  <title>Sand Particles with SVG</title>
   <style>
     html, body {
       margin: 0;
@@ -17,10 +17,54 @@
 <body>
 <canvas id="canvas"></canvas>
 
-<!-- Matter.js -->
 <script src="https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js"></script>
 
 <script>
+
+const getCountElemens = () => {
+  const w = window.innerWidth;
+  if(w > 2000) return 700;
+  if(w > 1700) return 600;
+  if(w > 1400) return 500;
+  if(w > 1200) return 400;
+  if(w > 900) return 300;
+  if(w > 600) return 250;
+  return 250;
+
+}
+
+  // SVG texture generator
+  const createSVGTexture = (shape, fill) => {
+    let svg = "";
+    if (shape === "arrow") {
+      svg = `<svg xmlns="http://www.w3.org/2000/svg" width="53" height="41" viewBox="0 0 53 41">
+        <path d="M0.25 19L52.46 0.66C50.66 1.99 49.05 3.28 47.62 4.54C34.64 15.96 36.86 24.77 51.17 40.71L0.25 19Z" fill="${fill}"/>
+      </svg>`;
+    }
+    if (shape === "circle") {
+      svg = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+        <circle cx="20" cy="20" r="18" fill="${fill}" />
+      </svg>`;
+    }
+    if (shape === "plus") {
+      svg = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+        <rect x="17" y="5" width="6" height="30" fill="${fill}" />
+        <rect x="5" y="17" width="30" height="6" fill="${fill}" />
+      </svg>`;
+    }
+    const blob = new Blob([svg], { type: "image/svg+xml" });
+    return URL.createObjectURL(blob);
+  };
+
+  const textures = [
+    createSVGTexture("arrow", "black"),
+    createSVGTexture("arrow", "blue"),
+    createSVGTexture("circle", "black"),
+    createSVGTexture("circle", "blue"),
+    createSVGTexture("plus", "black"),
+    createSVGTexture("plus", "blue"),
+  ];
+
   const {
     Engine, Render, Runner, World,
     Bodies, Body, Events, Mouse, Query
@@ -61,27 +105,26 @@
     mousePos.y = e.clientY;
   });
 
-  // Песчинка с физическим и визуальным радиусом
+  // Генерация песчинок с текстурами
   const createParticle = (x, y) => {
-    const physicsRadius = 16;
-    const visualRadius = 8.2;
-
-    const body = Bodies.circle(x, y, physicsRadius, {
+    const radius = 17;
+    const body = Bodies.circle(x, y, radius, {
       restitution: 0.05,
       friction: 0.05,
       frictionAir: 0.01,
       render: {
-        visible: false // отключаем стандартную отрисовку
+        sprite: {
+          texture: textures[Math.floor(Math.random() * textures.length)],
+          xScale: 0.5,
+          yScale: 0.5
+        }
       }
     });
-
-    body.plugin.visualRadius = visualRadius;
-    body.plugin.color = Math.random() > 0.5 ? "#ff0000" : "#ffffff";
     return body;
   };
 
-  // Генерация песка
-  const PARTICLE_COUNT = 500;
+  // Создание частиц
+  const PARTICLE_COUNT = getCountElemens();
   for (let i = 0; i < PARTICLE_COUNT; i++) {
     const x = Math.random() * width;
     const y = -Math.random() * height;
@@ -89,9 +132,9 @@
     World.add(world, p);
   }
 
-  // Оптимизированное отталкивание мыши
+  // Отталкивание мышью
   Events.on(engine, "beforeUpdate", () => {
-    const radius = 70;
+    const radius = 90;
     const strength = 0.03;
 
     const region = {
@@ -117,20 +160,6 @@
       }
     }
   });
-
-  // Кастомная отрисовка с учётом визуального радиуса
-  Events.on(render, "afterRender", () => {
-    const ctx = render.context;
-    for (const body of world.bodies) {
-      if (body.circleRadius && body.plugin?.visualRadius) {
-        ctx.beginPath();
-        ctx.arc(body.position.x, body.position.y, body.plugin.visualRadius, 0, Math.PI * 2);
-        ctx.fillStyle = body.plugin.color || "#fff";
-        ctx.fill();
-      }
-    }
-  });
-
 </script>
 </body>
 </html>
