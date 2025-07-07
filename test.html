@@ -7,7 +7,7 @@
     html, body {
       margin: 0;
       overflow: hidden;
-      background: #111;
+      background: white;
       touch-action: none; /* важно для touchmove */
     }
     canvas {
@@ -28,6 +28,12 @@ const getCountElemens = () => {
   if(w > 1700) return 600;
   if(w > 1400) return 500;
   return 450;
+}
+
+const getIsMobile = () => {
+  const w = window.innerWidth;
+  if(w > 550) return 0.03
+  return 0.04
 }
 
 const createSVGTexture = (shape, fill) => {
@@ -79,7 +85,7 @@ const render = Render.create({
   options: {
     width,
     height,
-    background: '#111',
+    background: 'white',
     wireframes: false,
     pixelRatio: window.devicePixelRatio,
   }
@@ -139,7 +145,7 @@ for (let i = 0; i < PARTICLE_COUNT; i++) {
 // Repel particles near pointer
 Events.on(engine, "beforeUpdate", () => {
   const radius = 90;
-  const strength = 0.03;
+  const strength = getIsMobile();
 
   const region = {
     min: { x: pointerPos.x - radius, y: pointerPos.y - radius },
