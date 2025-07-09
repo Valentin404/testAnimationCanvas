@@ -9,7 +9,7 @@
         margin: 0;
         overflow: hidden;
         background: white;
-        touch-action: none; /* важно для touchmove */
+        touch-action: none;
       }
       canvas {
         display: block;
@@ -26,46 +26,32 @@
         const w = window.innerWidth;
         if (w > 2000) return 700;
         if (w > 1700) return 600;
-        // if(w > 1400) return 500;
         return 600;
       };
 
-      const getIsMobileGrav = () => {
-        const w = window.innerWidth;
-        if (w > 550) return 0.1;
-        return 0.11;
-      };
-      const getIsMobileTuch = () => {
-        const w = window.innerWidth;
-        if (w > 550) return 90;
-        return 130;
-      };
+      const getIsMobileGrav = () => (window.innerWidth > 550 ? 0.13 : 0.16);
+      const getIsMobileTuch = () => (window.innerWidth > 550 ? 90 : 130);
 
       const createSVGTexture = (shape, fill) => {
         let svg = "";
         if (shape === "arrow") {
           svg = `
-       <svg width="40" height="40" viewBox="0 0 72 73" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M70.1493 34.3046L46.0009 42.8664L39.2831 71.7331C37.6605 73.0703 36.5837 72.9008 35.2528 71.8863L0.383636 3.99691C-0.292643 1.48786 -0.164901 0.432758 3.28125 0.59084L69.9825 29.9163C72.3457 32.3019 71.6441 33.0571 70.1493 34.3046Z" fill="${fill}"/>
-</svg>`;
+          <svg width="40" height="40" viewBox="0 0 72 73" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M70.1493 34.3046L46.0009 42.8664L39.2831 71.7331C37.6605 73.0703 36.5837 72.9008 35.2528 71.8863L0.383636 3.99691C-0.292643 1.48786 -0.164901 0.432758 3.28125 0.59084L69.9825 29.9163C72.3457 32.3019 71.6441 33.0571 70.1493 34.3046Z" fill="${fill}"/>
+          </svg>`;
         }
         if (shape === "circle") {
-          svg = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
-            <circle
-              stroke="${fill}"
-              cx="20"
-              cy="20"
-              r="12.15"
-              fill="none"
-              stroke-width="11.7"
-            />
+          svg = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+            <circle stroke="${fill}" cx="20" cy="20" r="12.15" fill="none" stroke-width="11.7" />
           </svg>`;
         }
         if (shape === "plus") {
-          svg = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
-      <rect x="17" y="5" width="6" height="30" fill="${fill}" />
-      <rect x="5" y="17" width="30" height="6" fill="${fill}" />
-    </svg>`;
+          svg = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+            <rect x="17" y="5" width="6" height="30" fill="${fill}" />
+            <rect x="5" y="17" width="30" height="6" fill="${fill}" />
+          </svg>`;
         }
         const blob = new Blob([svg], { type: "image/svg+xml" });
         return URL.createObjectURL(blob);
@@ -115,40 +101,33 @@
       Runner.run(Runner.create(), engine);
 
       // Walls
-      const ground = Bodies.rectangle(width / 2, height + 20, width, 40, {
-        isStatic: true,
-      });
-      const wallLeft = Bodies.rectangle(-20, height / 2, 40, height, {
-        isStatic: true,
-      });
-      const wallRight = Bodies.rectangle(width + 20, height / 2, 40, height, {
-        isStatic: true,
-      });
-      World.add(world, [ground, wallLeft, wallRight]);
+      const ground = Bodies.rectangle(width / 2, height + 20, width, 40, { isStatic: true });
+      const ceiling = Bodies.rectangle(width / 2, -20, width, 40, { isStatic: true });
+      const wallLeft = Bodies.rectangle(-20, height / 2, 40, height, { isStatic: true });
+      const wallRight = Bodies.rectangle(width + 20, height / 2, 40, height, { isStatic: true });
 
-      // Unified pointer position (mouse or touch)
+      World.add(world, [ground, ceiling, wallLeft, wallRight]);
+
       const pointerPos = { x: -9999, y: -9999 };
 
-      // Mouse support
+      // Pointer listeners
       window.addEventListener("mousemove", (e) => {
         pointerPos.x = e.clientX;
         pointerPos.y = e.clientY;
       });
 
-      // Touch support
-      window.addEventListener(
-        "touchmove",
-        (e) => {
-          const touch = e.touches[0];
-          if (touch) {
-            pointerPos.x = touch.clientX;
-            pointerPos.y = touch.clientY;
-          }
-        },
-        { passive: false }
-      );
+      window.addEventListener("touchmove", (e) => {
+        const touch = e.touches[0];
+        if (touch) {
+          pointerPos.x = touch.clientX;
+          pointerPos.y = touch.clientY;
+        }
+      }, { passive: false });
 
-      // Particles with texture
+      // Particles
+      const PARTICLE_COUNT = getCountElemens();
+      const particles = [];
+
       const createParticle = (x, y) => {
         const radius = 17;
         return Bodies.circle(x, y, radius, {
@@ -165,14 +144,15 @@
         });
       };
 
-      const PARTICLE_COUNT = getCountElemens();
       for (let i = 0; i < PARTICLE_COUNT; i++) {
         const x = Math.random() * width;
         const y = -Math.random() * height;
-        World.add(world, createParticle(x, y));
+        const particle = createParticle(x, y);
+        particles.push(particle);
+        World.add(world, particle);
       }
 
-      // Repel particles near pointer
+      // Interaction + bounds protection
       Events.on(engine, "beforeUpdate", () => {
         const radius = getIsMobileTuch();
         const strength = getIsMobileGrav();
@@ -185,18 +165,28 @@
         const bodies = Query.region(world.bodies, region);
         for (let body of bodies) {
           if (body.isStatic) continue;
-
           const dx = body.position.x - pointerPos.x;
           const dy = body.position.y - pointerPos.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
           if (dist < radius) {
             const force = (1 - dist / radius) * strength;
             const angle = Math.atan2(dy, dx);
-
             Body.applyForce(body, body.position, {
               x: Math.cos(angle) * force,
               y: Math.sin(angle) * force,
             });
+          }
+        }
+
+        // Reset particles that left visible area
+        for (let particle of particles) {
+          const { x, y } = particle.position;
+          if (x < -100 || x > width + 100 || y < -100 || y > height + 100) {
+            Body.setPosition(particle, {
+              x: Math.random() * width,
+              y: -Math.random() * 100,
+            });
+            Body.setVelocity(particle, { x: 0, y: 0 });
           }
         }
       });
