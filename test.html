@@ -14,14 +14,98 @@
       canvas {
         display: block;
       }
+
+      .container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        width: 100vw;
+        background-color: azure;
+        z-index: 99;
+        flex-direction: column;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .title {
+        background: linear-gradient(to right, black, blue);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text; /* for Firefox */
+        color: transparent;
+        width: 80%;
+        /* max-width: 1300px; */
+        text-align: center;
+
+        font-size: clamp(24px, 10vw, 170px);
+      }
+
+      .cont {
+        display: flex;
+        justify-content: center;
+        flex-direction: column;
+        align-items: center;
+      }
+      .cont-img {
+        
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 86px;
+        height: 86px;
+      }
+      .cont-img-c {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: rgba(34, 34, 182, 1);
+        filter: blur(7.4px);
+        border-radius: 100%;
+      }
+      .cont-img img {
+        position: absolute;
+        height: 80%;
+      }
+      .start-btn {
+        margin-top: 25px;
+        background-color: black;
+        padding: 6px 70px;
+        font-size: 30px;
+        font-weight: 500;
+        color: white;
+        border: none;
+        border-radius: 26px;
+        cursor: pointer;
+
+      }
     </style>
   </head>
   <body>
+    <div class="container" id="container">
+      <h1 class="title">Остання подорож з нами</h1>
+      <div class="cont">
+        <div class="cont-img">
+        <div class="cont-img-c"></div>
+          <img src="./img/icon.png" alt="" />
+        </div>
+        <button class="start-btn" id="btnStart">Start</button>
+      </div>
+    </div>
+
     <canvas id="canvas"></canvas>
 
     <script src="https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js"></script>
 
     <script>
+
+const btnStart = document.querySelector('#btnStart')
+const container = document.querySelector('#container')
+btnStart.onclick = () => {
+  container.remove()
+}
+
       const getCountElemens = () => {
         const w = window.innerWidth;
         if (w > 2000) return 700;
@@ -101,10 +185,18 @@
       Runner.run(Runner.create(), engine);
 
       // Walls
-      const ground = Bodies.rectangle(width / 2, height + 20, width, 40, { isStatic: true });
-      const ceiling = Bodies.rectangle(width / 2, -20, width, 40, { isStatic: true });
-      const wallLeft = Bodies.rectangle(-20, height / 2, 40, height, { isStatic: true });
-      const wallRight = Bodies.rectangle(width + 20, height / 2, 40, height, { isStatic: true });
+      const ground = Bodies.rectangle(width / 2, height + 20, width, 40, {
+        isStatic: true,
+      });
+      const ceiling = Bodies.rectangle(width / 2, -20, width, 40, {
+        isStatic: true,
+      });
+      const wallLeft = Bodies.rectangle(-20, height / 2, 40, height, {
+        isStatic: true,
+      });
+      const wallRight = Bodies.rectangle(width + 20, height / 2, 40, height, {
+        isStatic: true,
+      });
 
       World.add(world, [ground, ceiling, wallLeft, wallRight]);
 
@@ -116,13 +208,17 @@
         pointerPos.y = e.clientY;
       });
 
-      window.addEventListener("touchmove", (e) => {
-        const touch = e.touches[0];
-        if (touch) {
-          pointerPos.x = touch.clientX;
-          pointerPos.y = touch.clientY;
-        }
-      }, { passive: false });
+      window.addEventListener(
+        "touchmove",
+        (e) => {
+          const touch = e.touches[0];
+          if (touch) {
+            pointerPos.x = touch.clientX;
+            pointerPos.y = touch.clientY;
+          }
+        },
+        { passive: false }
+      );
 
       // Particles
       const PARTICLE_COUNT = getCountElemens();
